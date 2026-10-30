@@ -31,10 +31,10 @@ export class ApiClient {
       // If running inside Capacitor (native Android/iOS)
       const isCapacitor = !!(window as any).Capacitor;
       if (isCapacitor) {
-        return process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.50:4000';
+        return process.env.NEXT_PUBLIC_API_URL || 'https://nerve-knee-insurance-came.trycloudflare.com';
       }
     }
-    return process.env.NEXT_PUBLIC_API_URL || '';
+    return process.env.NEXT_PUBLIC_API_URL || 'https://nerve-knee-insurance-came.trycloudflare.com';
   }
 
   public static setBaseUrl(url: string): void {
