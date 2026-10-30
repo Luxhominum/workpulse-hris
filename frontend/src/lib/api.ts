@@ -456,7 +456,7 @@ export class ApiClient {
 
   public static async getKioskInit(officeId?: string): Promise<KioskInitData> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
     try {
       const sep = officeId ? '&' : '?';
       const baseParam = officeId ? `office_id=${encodeURIComponent(officeId)}` : '';
@@ -468,10 +468,11 @@ export class ApiClient {
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           Pragma: 'no-cache',
+          'Bypass-Tunnel-Reminder': 'true',
         },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to initialize Kiosk data');
+      if (!res.ok) throw new Error(data.message || 'Gagal memuat data kios kantor');
       return data.data;
     } finally {
       clearTimeout(timeoutId);
@@ -485,7 +486,7 @@ export class ApiClient {
     officeId?: string
   ): Promise<KioskAttendanceResult> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     try {
       const formData = new FormData();
       formData.append('employee_id', employeeId);
@@ -496,11 +497,14 @@ export class ApiClient {
 
       const res = await fetch(`${this.getApiBase()}/kiosk/clock-in`, {
         method: 'POST',
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true',
+        },
         body: formData,
         signal: controller.signal,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to clock in at Kiosk');
+      if (!res.ok) throw new Error(data.message || 'Gagal presensi masuk di kios');
       return data.data;
     } finally {
       clearTimeout(timeoutId);
@@ -514,7 +518,7 @@ export class ApiClient {
     officeId?: string
   ): Promise<KioskAttendanceResult> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     try {
       const formData = new FormData();
       formData.append('employee_id', employeeId);
@@ -525,11 +529,14 @@ export class ApiClient {
 
       const res = await fetch(`${this.getApiBase()}/kiosk/clock-out`, {
         method: 'POST',
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true',
+        },
         body: formData,
         signal: controller.signal,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to clock out at Kiosk');
+      if (!res.ok) throw new Error(data.message || 'Gagal presensi pulang di kios');
       return data.data;
     } finally {
       clearTimeout(timeoutId);
@@ -539,11 +546,14 @@ export class ApiClient {
   public static async verifyKioskAdminPin(pin: string): Promise<boolean> {
     const res = await fetch(`${this.getApiBase()}/kiosk/verify-pin`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Bypass-Tunnel-Reminder': 'true',
+      },
       body: JSON.stringify({ pin }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Invalid Kiosk Admin PIN');
+    if (!res.ok) throw new Error(data.message || 'PIN Supervisor Kios tidak valid');
     return data.success;
   }
 

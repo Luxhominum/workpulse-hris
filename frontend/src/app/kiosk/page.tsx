@@ -569,9 +569,6 @@ export default function KioskPage() {
                 <span>{isVerifyingHrPin ? 'Memverifikasi...' : 'Buka Terminal'}</span>
               </button>
             </div>
-            <p className="text-[10px] text-[#8C8578] font-mono">
-              PIN Master: 8888 / 1234
-            </p>
           </div>
         </div>
       ) : (
