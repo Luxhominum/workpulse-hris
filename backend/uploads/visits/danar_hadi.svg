@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+      <defs>
+        <linearGradient id="grad_2B3A67" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#2B3A67;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#161B26;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect width="600" height="450" fill="url(#grad_2B3A67)" />
+      <circle cx="300" cy="180" r="80" fill="#FAF8F5" opacity="0.15" />
+      <text x="300" y="200" font-family="sans-serif" font-size="54" text-anchor="middle">🏬</text>
+      <rect x="40" y="310" width="520" height="100" rx="16" fill="#161B26" opacity="0.9" />
+      <text x="60" y="350" font-family="sans-serif" font-size="19" font-weight="bold" fill="#FAF8F5">Batik Danar Hadi Solo</text>
+      <text x="60" y="380" font-family="sans-serif" font-size="13" fill="#C3B8A8">Jl. Slamet Riyadi No. 295, Solo</text>
+      <text x="530" y="370" font-family="sans-serif" font-size="12" font-weight="bold" fill="#D97706" text-anchor="end">GPS VERIFIED</text>
+    </svg>

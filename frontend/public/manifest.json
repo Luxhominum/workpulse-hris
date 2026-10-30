@@ -1,0 +1,22 @@
+{
+  "name": "WorkPulse HRIS",
+  "short_name": "WorkPulse",
+  "description": "Enterprise Employee Attendance, Live Camera Capture, & Geofenced Clock-In",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF8F5",
+  "theme_color": "#FAF8F5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/brand/workpulse-emblem.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

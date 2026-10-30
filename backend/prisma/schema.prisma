@@ -1,0 +1,288 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum AttendanceStatus {
+  ON_TIME
+  LATE
+  WFH
+  OUT_OF_OFFICE
+}
+
+enum LeaveType {
+  SICK
+  ANNUAL
+  PERSONAL
+  DUTY
+  CORRECTION
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OvertimeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Company {
+  id             String        @id @default(cuid())
+  name           String        // Nama Perusahaan
+  slug           String        @unique // Identifier unik (e.g. "pge", "prima-global")
+  is_whitelisted Boolean       @default(false) // TRUE = Whitelist Pilot Master (Lifetime Free & Unlimited)
+  plan_type      String        @default("ENTERPRISE_LIFETIME") // TRIAL, STARTER, GROWTH, ENTERPRISE_LIFETIME
+  max_employees  Int           @default(999999) // Kuota karyawan
+  is_active      Boolean       @default(true)
+  logo_url       String?
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  employees      Employee[]
+  offices        Office[]
+  shifts         Shift[]
+  client_visits  ClientVisit[]
+}
+
+model Office {
+  id            String     @id @default(cuid())
+  company_id    String?
+  company       Company?   @relation(fields: [company_id], references: [id], onDelete: SetNull)
+  name          String
+  latitude      Float
+  longitude     Float
+  radius_meters Int        @default(50)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  employees     Employee[]
+}
+
+model Shift {
+  id                   String        @id @default(cuid())
+  company_id           String?
+  company              Company?      @relation(fields: [company_id], references: [id], onDelete: SetNull)
+  name                 String
+  start_time           String        // "HH:mm" e.g. "09:00"
+  end_time             String        // "HH:mm" e.g. "18:00"
+  grace_period_minutes Int           @default(10)
+  created_at           DateTime      @default(now())
+  updated_at           DateTime      @updatedAt
+  employees            Employee[]
+  shift_rosters        ShiftRoster[]
+}
+
+model Employee {
+  id                 String             @id @default(cuid())
+  company_id         String?
+  company            Company?           @relation(fields: [company_id], references: [id], onDelete: SetNull)
+  email              String             @unique
+  password_hash      String
+  full_name          String
+  role               Role               @default(EMPLOYEE)
+  department         String             @default("General")
+  position           String             @default("Staff")
+  phone              String?
+  join_date          DateTime?
+  annual_leave_quota Int                @default(12)
+  annual_leave_used  Int                @default(0)
+  office_id          String?
+  office             Office?            @relation(fields: [office_id], references: [id], onDelete: SetNull)
+  shift_id           String?
+  shift              Shift?             @relation(fields: [shift_id], references: [id], onDelete: SetNull)
+  is_wfh_allowed     Boolean            @default(false)
+  is_active               Boolean            @default(true)
+  archived_at             DateTime?
+  kiosk_pin               String?            @default("1234") // 4-digit PIN for Kiosk / Tablet check-in
+
+  // --- Team PGE Comprehensive Attributes ---
+  employee_id_number      String?            // NIK Internal PGE (e.g. "210703")
+  nickname                String?            // Nama Panggilan (e.g. "Anis")
+  birth_place             String?            // Tempat Lahir
+  birth_date              DateTime?          // Tanggal Lahir
+  gender                  String?            // Jenis Kelamin ("Laki-laki" / "Perempuan")
+  marital_status          String?            // Status Perkawinan ("Kawin" / "Belum Kawin")
+  children_count          Int?               @default(0) // Jumlah Anak
+  blood_type              String?            // Golongan Darah (A, B, AB, O)
+  religion                String?            // Agama
+  ktp_number              String?            // No KTP (16 Digit)
+  kk_number               String?            // No KK (16 Digit)
+  emergency_contact_phone String?            // Telp Keluarga / Kontak Darurat
+  address                 String?            // Alamat Rumah
+  bank_uob                String?            // No Rekening Bank UOB (PGE Payroll)
+  bank_other              String?            // No Rekening Bank Lain (BCA, BRI, etc)
+  contract_signed_date    DateTime?          // Tanggal TTD Kontrak
+  employment_status       String?            // Status Karyawan (Kontrak, Tetap, Probasi)
+  work_history            String?            // Riwayat Pekerjaan / Background
+  disc_work               String?            // Profil DISC Kerja
+  disc_home               String?            // Profil DISC Rumah
+  vak                     String?            // Visual, Auditory, Kinesthetic
+  iq_score                String?            // IQ Score (Frexor)
+  iq_eling_healing        String?            // IQ Score (Eling Healing)
+  stifin                  String?            // Profil STIFIn (e.g. Sensing Extrovert, Thinking Extrovert)
+
+  created_at              DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
+  attendance_records AttendanceRecord[]
+  leave_requests     LeaveRequest[]
+  shift_rosters      ShiftRoster[]
+  overtime_requests  OvertimeRequest[]
+  client_visits      ClientVisit[]
+  notifications      Notification[]
+}
+
+model AttendanceRecord {
+  id                   String           @id @default(cuid())
+  employee_id          String
+  employee             Employee         @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  date                 DateTime         // Normalized date (midnight)
+  clock_in_time        DateTime?
+  clock_out_time       DateTime?
+  clock_in_lat         Float
+  clock_in_lng         Float
+  clock_in_photo_url   String
+  clock_out_photo_url  String?
+  status               AttendanceStatus @default(ON_TIME)
+  late_minutes         Int              @default(0)
+  is_manual_adjustment Boolean          @default(false)
+  adjustment_reason    String?
+  adjusted_by_id       String?
+  day_type             String           @default("WORKDAY")
+  created_at           DateTime         @default(now())
+  updated_at           DateTime         @updatedAt
+
+  @@unique([employee_id, date])
+}
+
+model LeaveRequest {
+  id               String      @id @default(cuid())
+  employee_id      String
+  employee         Employee    @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  type             LeaveType   @default(ANNUAL)
+  start_date       DateTime
+  end_date         DateTime
+  reason           String
+  attachment_url   String?
+  rejection_reason String?
+  status           LeaveStatus @default(PENDING)
+  approved_by_id   String?
+  approved_at      DateTime?
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+}
+
+model ShiftRoster {
+  id          String    @id @default(cuid())
+  employee_id String
+  employee    Employee  @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  shift_id    String
+  shift       Shift     @relation(fields: [shift_id], references: [id], onDelete: Cascade)
+  date        DateTime  // Normalized date (midnight)
+  notes       String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  @@unique([employee_id, date])
+}
+
+model OvertimeRequest {
+  id             String         @id @default(cuid())
+  employee_id    String
+  employee       Employee       @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  date           DateTime       // Normalized date (midnight)
+  start_time     String         // e.g. "17:00"
+  end_time       String         // e.g. "21:00"
+  duration_hours Float          // e.g. 4.0
+  reason         String         // Task / assignment purpose
+  status         OvertimeStatus @default(PENDING)
+  approved_by    String?        // ID manager/admin
+  approval_note  String?
+  reviewed_at    DateTime?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+
+  @@index([employee_id, date])
+}
+
+model ClientVisit {
+  id               String    @id @default(cuid())
+  company_id       String?
+  company          Company?  @relation(fields: [company_id], references: [id], onDelete: SetNull)
+  employee_id      String
+  employee         Employee  @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  
+  client_name      String    // Nama Toko / Outlet / Klien
+  client_address   String?   // Alamat Toko / Lokasi
+  contact_person   String?   // Nama Pemilik / PIC Toko
+  contact_phone    String?   // No HP Toko / Klien
+  
+  check_in_time    DateTime  @default(now())
+  check_out_time   DateTime?
+  duration_minutes Int?
+  
+  latitude         Float     // Koordinat GPS Check-in di Toko
+  longitude        Float
+  photo_url        String    // Foto selfie bukti kunjungan di toko
+  
+  visit_purpose    String    // Penawaran Produk, Restock, Penagihan, Survey, Maintenance
+  notes            String?   // Catatan hasil kunjungan
+  order_amount     Float?    @default(0) // Nilai pesanan / closing deal (Rp)
+  
+  status           String    @default("COMPLETED") // IN_PROGRESS, COMPLETED, CANCELLED
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@index([employee_id, check_in_time])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actor_id    String?  // ID pengguna yang melakukan aksi
+  actor_name  String   // Nama pengguna / "Sistem Otomatis"
+  actor_email String?  // Email pengguna
+  actor_role  String?  // ADMIN, MANAGER, EMPLOYEE, SYSTEM
+  ip_address  String?  // IP Address client
+  user_agent  String?  // Browser / Device Info
+
+  action      String   // EMPLOYEE_CREATE, EMPLOYEE_UPDATE, LEAVE_APPROVE, PAYROLL_EXPORT, etc.
+  entity_type String   // EMPLOYEE, LEAVE_REQUEST, OVERTIME_REQUEST, ATTENDANCE, PAYROLL
+  entity_id   String?  // ID entitas terkait
+  description String   // Rincian aktivitas dalam bahasa Indonesia yang jelas
+  
+  old_values  String?  // JSON stringified data sebelum perubahan (PII disensor)
+  new_values  String?  // JSON stringified data setelah perubahan (PII disensor)
+
+  created_at  DateTime @default(now())
+
+  @@index([action, created_at])
+  @@index([entity_type, entity_id])
+  @@index([actor_id])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  employee_id String
+  employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  type        String   // LEAVE_APPROVAL, OVERTIME_APPROVAL, SHIFT_REMINDER, SECURITY_ALERT, SYSTEM
+  title       String
+  message     String
+  is_read     Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  @@index([employee_id, is_read])
+  @@index([created_at])
+}
